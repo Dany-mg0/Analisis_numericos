@@ -1,0 +1,1372 @@
+---
+title: "Tarea 1. Soluciones de ecuaciones"
+author: "Daniela Paola Méndez García"
+format: 
+  html:
+    grid:
+      body-width: 1200px
+lang: es
+---
+
+Importamos packages y funciones necesarias:
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import optimize
+```
+
+Para las funciones de los ejercicios 1-6 realiza lo siguiente:
+
+a)  Gráfica de la función en el intervalo en caso que se indique.
+
+b)  Aproximación de la raíz o raíces por medio de los métodos de bisección, Newton-Raphson y la secante.
+
+c)  Compara los resultados.
+
+::: {#exr-tarea1_1}
+Un polinomio cuadrático de la forma $f(x)=ax^2+bx+c$ con dos raíces reales distintas.
+
+**Gráfica de la función**
+```{python}
+#| code-fold: true
+f = lambda x: x**2 - 5*x + 6
+
+x = np.linspace(0, 5, 500)
+y = f(x)
+
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,y, color ="red") 
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+
+# Personalizar gráfica
+plt.title(r"Gráfica de la función ejercicio 1" , fontsize= 14)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+**Aproximación de las raíces**
+
+- Bisección:
+
+```{python}
+#| code-fold : true
+
+def mi_biseccion(f, a, b, tol=1e-6, it_max=500):
+  if np.sign(f(a)) == np.sign(f(b)):
+    raise Exception("Los extremos del intervalo no cumplen con el criterio del método")
+  
+  iteracion = 0
+  while iteracion < it_max:
+    m = a + (b-a)/2
+    if np.abs(f(m))< tol:
+      iteracion +=1
+      convergencia = True
+      return m, iteracion, convergencia
+    elif np.sign(f(a)) == np.sign(f(m)):
+      a = m
+      iteracion +=1
+    else:
+      b = m
+      iteracion +=1
+  convergencia = False    
+  return m, iteracion, convergencia
+```
+
+Primera raíz:
+
+```{python}
+#| code-fold: true
+
+f = lambda x: x**2-5*x+6
+
+root, iteraciones, convergencia = mi_biseccion(f, 1, 2.5, tol=1e-9, it_max=150)
+
+print(f"Después de {iteraciones} iteraciones la aproximación de la raíz de la función es {root}")
+print(f"¿Hubo convergencia con la exactitud solicitada?: {convergencia}")
+
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: true
+
+f = lambda x: x**2-5*x+6
+
+root, iteraciones, convergencia = mi_biseccion(f, 2.5, 4, tol=1e-9, it_max=150)
+
+print(f"Después de {iteraciones} iteraciones la aproximación de la raíz de la función es {root}")
+print(f"¿Hubo convergencia con la exactitud solicitada?: {convergencia}")
+
+```
+
+
+- Newton-Raphson:
+Primera derivada : $f'(x)= 2x-5$
+
+```{python}
+#| code-fold: true
+
+def my_newton(f, x0, fprime, tol = 1e-6, it_max=500):
+  iteracion = 0
+  while iteracion < it_max:
+    x1 = x0 - f(x0)/fprime(x0)
+    if np.abs(f(x1))< tol:
+      iteracion +=1
+      convergencia = True
+      return x1, iteracion, convergencia
+    else:
+      x0 = x1
+      iteracion +=1
+  convergencia = False
+  return x1, iteracion, convergencia
+```
+
+Primera raíz:
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 2*x-5
+
+root_newton, info_newton = optimize.newton(f, 1, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("--------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 2*x-5
+
+root_newton, info_newton = optimize.newton(f, 4, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("--------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+-Método de la secante
+
+Pirmera raíz
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(f, x0 = 1, x1 = 2, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("----------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Segunda raíz
+
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(f, x0 = 3, x1 = 4, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("----------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+:::
+
+
+::: {#exr-tarea1_2}
+Un polinomio cúbico de la forma $f(x)=ax^3+bx^2+cx+d$ con tres raíces reales distintas.
+
+**Gráfica de la función**
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+f = lambda x: x**3 -6*x**2 + 11*x -6
+
+x = np.linspace(-1, 4, 500)
+y = f(x)
+
+
+plt.figure(figsize=(8,5))
+plt.plot(x,y, color ="aqua") 
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje y
+
+# Personalizar gráfica
+plt.title(r"Gráfica de la función ejercicio 2" , fontsize= 14)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+
+plt.show()
+```
+
+**Aproximación de raíces**
+
+-Bisección:
+
+Primera raíz:
+
+```{python}
+#| code-fold: true
+
+f = lambda x: x**3 -6*x**2 + 11*x -6
+
+root, iteraciones, convergencia = mi_biseccion(f, 0.5, 1.5, tol=1e-9, it_max=500)
+
+print(f"Después de {iteraciones} iteraciones la aproximación de la raíz de la función es {root}")
+print(f"¿Hubo convergencia con la exactitud solicitada?: {convergencia}")
+```
+
+Segunda raíz:
+
+```{python}
+f = lambda x: x**3 -6*x**2 + 11*x -6
+
+root, iteraciones, convergencia = mi_biseccion(f, 1.5, 2.5, tol=1e-9, it_max=500)
+
+print(f"Después de {iteraciones} iteraciones la aproximación de la raíz de la función es {root}")
+print(f"¿Hubo convergencia con la exactitud solicitada?: {convergencia}")
+```
+
+Tercera raíz:
+
+```{python}
+f = lambda x: x**3 -6*x**2 + 11*x -6
+
+root, iteraciones, convergencia = mi_biseccion(f, 2.5, 3.5, tol=1e-9, it_max=500)
+
+print(f"Después de {iteraciones} iteraciones la aproximación de la raíz de la función es {root}")
+print(f"¿Hubo convergencia con la exactitud solicitada?: {convergencia}")
+```
+
+-Newton-Raphsone
+
+Primera derivada : $f'(x)= 3*x**2 -12*x +11$
+
+Primera raíz: 
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 3*x**2 -12*x +11
+
+root_newton, info_newton = optimize.newton(f, 0.5, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("--------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 3*x**2 -12*x +11
+
+root_newton, info_newton = optimize.newton(f, 2, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("--------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Tercera raíz
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 3*x**2 -12*x +11
+
+root_newton, info_newton = optimize.newton(f, 3, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("--------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+-Método de la secante
+
+Primera raíz:
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(f, x0 = 0.5, x1= 1, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(f, x0 = 1.5, x1= 2.5, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Tercera raíz:
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(f, x0 = 2.5, x1= 3.5, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+
+:::
+
+::: {#exr-tarea1_3}
+$f(x)= x^3 -5x^2e^{-x}+e^{-3x}$, para $0\leq x \leq 2$
+:::
+**Grafica de la función**
+
+```{python}
+#| code-fold: true
+f = lambda x: x**3-5* x**2* np.exp(-x)+ np.exp(-3*x)
+
+x = np.linspace(0, 2, 100)
+y = f(x)
+
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,y, color ="blue") 
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+
+# Personalizar gráfica
+plt.title(r"Gráfica de la función ejercicio 3" , fontsize= 14)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+**Aproximación de las raíces**
+
+-Bisección
+
+Primera raíz:
+
+```{python}
+#| code-fold: True 
+
+f = lambda x: x**3-5* x**2* np.exp(-x)+ np.exp(-3*x)
+
+f0 = f(0) 
+f1 = f(1) 
+
+if f0 * f1 < 0:
+    root_biseccion, info_biseccion = optimize.bisect(f, 0, 1, full_output=True)
+  
+    print("Información de la convergencia del método:")
+    print(info_biseccion)
+    print("------------------------------------")
+    print(f"La raíz de la función es: {root_biseccion}")
+
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: True 
+
+f = lambda x: x**3-5* x**2* np.exp(-x)+ np.exp(-3*x)
+
+f0 = f(0) 
+f1 = f(1) 
+
+if f0 * f1 < 0:
+    root_biseccion, info_biseccion = optimize.bisect(f, 1, 2, full_output=True)
+  
+    print("Información de la convergencia del método:")
+    print(info_biseccion)
+    print("------------------------------------")
+    print(f"La raíz de la función es: {root_biseccion}")
+```
+
+-Newton-Raphson:
+
+Primera derivada : $f'(x)=3*x**2 - 10*x*np.exp(-x) + 5*x**2*np.exp(-x) - 3*np.exp(-3*x) $
+
+Primera raíz:
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 3*x**2 - 10*x*np.exp(-x) + 5*x**2*np.exp(-x) - 3*np.exp(-3*x)
+
+root_newton, info_newton = optimize.newton(f, 0, f_der, full_output = True)
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 3*x**2 - 10*x*np.exp(-x) + 5*x**2*np.exp(-x) - 3*np.exp(-3*x)
+
+root_newton, info_newton = optimize.newton(f, 2, f_der, full_output = True)
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+
+```
+
+-Metodo de la secante:
+
+Primera raíz:
+
+```{python}
+#| code-fold: true 
+
+root_secante, info_secante = optimize.newton(f, x0 = 0, x1= 1, full_output=True)
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+
+```
+
+Segunda raíz:
+
+```{python}
+#| code-fold: true 
+
+root_secante, info_secante = optimize.newton(f, x0 = 1, x1= 2, full_output=True)
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+
+```
+
+
+::: {#exr-tarea1_4}
+La primera raíz positiva de $g(x)= e^{-x}-cos(ax)$ para $a=1, 3, 5, 9$.
+
+**Gráfica de la función**
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+g1 = lambda x: np.exp(-x)-np.cos(x) 
+g3 = lambda x: np.exp(-x)-np.cos(3* x)
+g5 = lambda x: np.exp(-x)-np.cos(5* x)
+g7 = lambda x: np.exp(-x)-np.cos(9* x)
+
+x = np.linspace(0, 2, 500)
+
+
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas 
+plt.plot(x, g1(x), color = "red", label = "a=1") 
+plt.plot(x, g3(x), color = "green", label = "a=3")
+plt.plot(x, g5(x), color = "blue", label = "a=5")
+plt.plot(x, g7(x), color = "#1beeb6a9", label = "a=9")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+
+# Personalizar gráfica
+plt.title(r"Gráfica de la función ejercicio 4" , fontsize= 14)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+```
+
+**Aproximación de las raíces positivas**
+
+-Bisección: 
+
+Primera raíz a=1:
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g1, 1, 2, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+Segunda raíz a= 3
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g3, 0.1, 0.5, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+Tercera raíz a=5
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g5, 0.05, 0.2, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+Cuarta raíz a=9
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g7, 0.01, 0.1, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+-Newton-Raphsone:
+
+Primera derivada $f'(x)= -np.exp(-x) + a*np.sin(a*x)$
+
+Primera raíz a=1
+
+```{python}
+#| code-fold: true
+
+# Se brinda la derivada de la función
+g_der = lambda x: -np.exp(-x) + np.sin(x)
+# Se aplica el método de Newton-Raphson
+root_newton, info_newton = optimize.newton(g1, 1.5, g_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Segunda raíz a=3
+
+```{python}
+#| code-fold: true
+
+# Se brinda la derivada de la función
+g_der = lambda x: -np.exp(-x) + 3*np.sin(3*x)
+# Se aplica el método de Newton-Raphson
+root_newton, info_newton = optimize.newton(g3, 0.3, g_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Tercera raíz a=5
+
+```{python}
+#| code-fold: true
+
+# Se brinda la derivada de la función
+g_der = lambda x: -np.exp(-x) + 5*np.sin(5*x)
+# Se aplica el método de Newton-Raphson
+root_newton, info_newton = optimize.newton(g5, 0.1, g_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Cuarta raíz a=9
+
+```{python}
+#| code-fold: true
+
+# Se brinda la derivada de la función
+g_der = lambda x: -np.exp(-x) + 9*np.sin(9*x)
+# Se aplica el método de Newton-Raphson
+root_newton, info_newton = optimize.newton(g7, 0.05, g_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+-Método de la secante 
+
+Primera raíz a=1
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(g1, x0 = 1, x1= 2, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Segunda raíz a=3
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(g3, x0 = 0.1, x1= 0.5, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Tercera raíz a=5
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(g5, x0 = 0.05, x1= 0.2, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Cuarta raíz a=9
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(g7, x0 = 0.01, x1= 0.1, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+:::
+
+::: {#exr-tarea1_5}
+$g(x)= e^x-log(x+1) -b$ donde $b=2, 3, 5$.
+
+**Gráfica de la función**
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+g2 = lambda x: np.exp(x) - np.log(x + 1) - 2
+g4 = lambda x: np.exp(x) - np.log(x + 1) - 3
+g6 = lambda x: np.exp(x) - np.log(x + 1) - 5
+
+x = np.linspace(-0.9, 2, 100)
+
+
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas 
+plt.plot(x, g2(x), color = "red", label = "b=2") 
+plt.plot(x, g4(x), color = "green", label = "b=3")
+plt.plot(x, g6(x), color = "blue", label = "b=5")
+#plt.plot(x, g7(x), color = "#1beeb6a9", label = "a=9")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+
+# Personalizar gráfica
+plt.title(r"Gráfica de la función ejercicio 5" , fontsize= 14)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+```
+
+
+**Aproximación de raíces**
+
+-Bisección 
+
+Primera raíz b=2
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g2, 0.5, 1.5, xtol=2e-12, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+Segunda raíz b=3
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g4, 1, 2, xtol=2e-12, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+Tercera raíz b=5
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g6, 1.5, 2.5, xtol=2e-12, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+-Newton-Raphsone:
+
+Primera derivada $f'(x)=x: np.exp(x) - 1/(x + 1) $
+
+Primera raíz b=2
+
+```{python}
+#| code-fold: true 
+
+g_der = lambda x: np.exp(x) - 1/(x + 1)
+
+root_newton, info_newton = optimize.newton(g2, 1, g_der, tol=2e-12, full_output = True)
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Segunda raíz b=3
+
+```{python}
+#| code-fold: true 
+
+g_der = lambda x: np.exp(x) - 1/(x + 1)
+
+root_newton, info_newton = optimize.newton(g4, 1.5, g_der, tol=2e-12, full_output = True)
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Tercera raíz b=5
+
+```{python}
+#| code-fold: true 
+
+g_der = lambda x: np.exp(x) - 1/(x + 1)
+
+root_newton, info_newton = optimize.newton(g6, 2, g_der, tol=2e-12, full_output = True)
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+-Método secante
+
+Primera raíz b=2
+
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(g2, x0 = 0.5, x1= 1.5, tol=2e-12, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Segunda raíz b=3
+
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(g4, x0 = 1, x1= 2, tol=2e-12, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Tercera raíz b=5
+
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(g6, x0 = 1.5, x1= 2.5, tol=2e-12, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+:::
+
+::: {#exr-tarea1_6}
+Todas las raíces de $f(x)= \sqrt{x}-sen(x) -c$ para $c=1,\pi$.
+
+**Gráfica de la función**
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+f1 = lambda x: np.sqrt(x) - np.sin(x) -1 
+f2 = lambda x: np.sqrt(x) - np.sin(x) -np.pi
+
+x = np.linspace (0, 35, 500)
+
+plt.figure(figsize=(8,5)) 
+plt.plot(x, f1(x), color="green", label = "c=1") 
+plt.plot(x, f2(x), color= "red", label = "c=π")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje y
+
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+plt.legend()
+
+plt.show()
+```
+
+**Aproximadión de la raíz**
+
+-Bisección:
+
+Primera raíz c=1
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(f1, 2, 3, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+
+```
+
+Segunda raíz $c=pi$
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(f2, 4, 5, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+-Newton-Raphson:
+
+Primera derivada de la función $f'(x)=\frac{1}{2√(x)} -cos(x) $
+
+Primera raíz c=1
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: (1/(2*np.sqrt(x))) -np.cos(x)
+
+root_newton, info_newton = optimize.newton(f1, 2, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+
+```
+
+Segunda raíz $C=pi$
+
+```{python}
+#| code-fold: true
+
+f_der = lambda x: 1/(2*np.sqrt(x)) - np.cos(x)
+
+root_newton, info_newton = optimize.newton(f2, 4, f_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+-Método de la secante
+
+Primera raíz $c=1$
+
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(f1, x0 = 2, x1= 3, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Segunda raíz $C=pi$
+
+```{python}
+#| code-fold: true
+
+root_secante, info_secante = optimize.newton(f2, x0 = 4, x1= 5, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+
+```
+
+:::
+
+::: {#exr-tarea1_7}
+El sistema de ecuaciones no lineales:
+
+\begin{eqnarray}
+y^2 - x^2 + 4x - 2 &=& 0\\
+x^2 +3y^2 - 4 &=& 0\\
+\end{eqnarray}
+
+tiene dos soluciones. Realiza una gráfica de las curvas de nivel y aproxima las soluciones.
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+f1 = lambda x: np.sqrt(x**2 -4 *x +2)
+f2 = lambda x: -np.sqrt(x**2 -4 *x +2)
+
+g1 = lambda x: np.sqrt ((1/3)* (-x** 2+4))
+g2 = lambda x: -np.sqrt ((1/3)* (-x** 2+4))
+
+x = np.linspace(-2, 2,500)
+
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,f1(x), color ="blue", label = "f1(x)")
+plt.plot(x, f2(x), color = "red", label = "f2(x)")
+plt.plot (x, g1(x), color = "green", label= "g1(x)")
+plt.plot (x, g2(x), color = "pink", label= "g2(x)")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.legend(fontsize= 14)
+
+# Personalizar gráfica
+plt.title("Gráfica Ejercicio 7", fontsize= 12)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+Encontramos los valores de $x$ 
+
+```{python}
+#| code-fold: true
+
+f = lambda x : (4/3) * x**2 -4 *x +(2/3)
+
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,f(x), color ="blue", label = "f(x)")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.legend(fontsize= 14)
+
+# Personalizar gráfica
+plt.title("Gráfica Ejercicio 7.b", fontsize= 12)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+
+df = lambda x: (8/3)*x-4
+
+x_root = optimize.newton(f, x0=1, fprime=df)
+y1_root = f1(x_root)
+y2_root = f2(x_root)
+
+print(f"Los puntos de intersección son ({x_root}, {y1_root}) y ({x_root}, {y2_root})")
+```
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+#| warning: false
+
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,f1(x), color ="blue", label = "f1(x)")
+plt.plot(x, f2(x), color = "red", label = "f2(x)")
+plt.plot (x, g1(x), color = "green", label= "g1(x)")
+plt.plot (x, g2(x), color = "pink", label= "g2(x)")
+plt.plot (x, g1(x), color = "green", label= "g1(x)")
+plt.plot(y1_root, marker = 'o', ms=8, color= "black")
+plt.plot(y2_root, marker = 'o', ms=8, color= "black")
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.legend(fontsize= 14)
+
+# Personalizar gráfica
+plt.title("Gráfica Ejercicio 7", fontsize= 12)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+:::
+
+::: {#exr-tarea1_8}
+Considera el siguiente sistema:
+
+\begin{eqnarray}
+sen(x) + y^2 - 1 &=& 0\\
+x + cos(y) - 1 &=& 0\\
+\end{eqnarray}
+
+Realiza una gráfica de las curvas de nivel y aproxima la solución con la función `fsolve`.
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+f1 = lambda x: np.sqrt(1- np.sin(x))
+f2 = lambda x: -f1(x)
+g = lambda x: np.acos(1-x)
+
+x = np.linspace(0, 2, 500)
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,f1(x), color ="blue", label = "f1(x)")
+plt.plot(x, f2(x), color = "red", label = "f2(x)")
+plt.plot (x, g(x), color = "green", label= "g(x)")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.legend(fontsize= 14)
+
+# Personalizar gráfica
+plt.title("Gráfica Ejercicio 8", fontsize= 12)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+Aproximamos la única intersección 
+
+```{python}
+def sistema(variables):
+  x, y = variables
+  return [np.sin(x)+y**2-1, x+np.cos(y)-1]
+
+solucion = optimize.fsolve(sistema, x0=[0.5, 1])
+print(f" el punto de intersección es: ({round(solucion[0], 4)}, {round(solucion[1], 4)})")
+```
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+
+plt.plot(x,f1(x), color ="blue", label = "f1(x)")
+plt.plot(x, f2(x), color = "red", label = "f2(x)")
+plt.plot (x, g(x), color = "green", label= "g(x)")
+plt.plot(solucion[0], solucion[1], marker = 'o', ms=8, color= "purple")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje y
+
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+plt.legend()
+
+plt.show()
+```
+
+:::
+
+::: {#exr-tarea1_9}
+Para el siguiente sistema de ecuaciones no lineal:
+
+\begin{eqnarray}
+x^3 + y - 6 &=& 0\\
+y^3 -x - 4 &=& 0\\
+\end{eqnarray}
+
+Realiza una gráfica de las curvas de nivel y aproxima la solución con la función `fsolve`.
+
+**Gráfica de las funciones**
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+f1 = lambda x: -x**3 +6 
+f2 = lambda x: (x+4)**(1/3)
+
+
+x = np.linspace(-2, 2, 500)
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,f1(x), color ="blue", label = "f1(x)")
+plt.plot(x, f2(x), color = "red", label = "f2(x)")
+#plt.plot (x, g(x), color = "green", label= "g(x)")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.legend(fontsize= 14)
+
+# Personalizar gráfica
+plt.title("Gráfica Ejercicio 8", fontsize= 12)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+Aproximamos la intersección
+
+```{python}
+def sistema(variables): 
+  x, y = variables
+  return [x**3+y-6,-x+y**3-4]
+
+
+solucion = optimize.fsolve(sistema, x0=[2, 2])
+print(f" el punto de intersección es: ({round(solucion[0], 4)}, {round(solucion[1], 4)})")
+```
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+
+plt.plot(x,f1(x), color ="blue", label = "f1(x)")
+plt.plot(x, f2(x), color = "red", label = "f2(x)")
+#plt.plot (x, g(x), color = "green", label= "g(x)")
+plt.plot(solucion[0], solucion[1], marker = 'o', ms=8, color= "purple")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje y
+
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+plt.legend()
+
+plt.show()
+```
+
+:::
+
+::: {#exr-tarea1_10}
+Consideraremos un sistema de ecuaciones no lineal para describir un modelo de equilibrio económico.
+
+1.  Curva de demanda no lineal
+
+\begin{equation}
+q_d = 200 - 10 p^2
+\end{equation}
+
+2.  Curva de oferta no lineal
+
+\begin{equation}
+q_s = 5 p^3 + 15
+\end{equation}
+
+El equilibrio ocurre cuando
+
+\begin{equation}
+q_s = q_d
+\end{equation}
+
+O bien
+
+\begin{eqnarray}
+q + 10p^2 -200  &=& 0\\
+q - 5p^3 - 15 &=& 0\\
+\end{eqnarray}
+
+Realiza una gráfica de las curvas y aproxima el punto de equilibrio con la función `fsolve`.
+
+**Gráfica oferta y demanda**
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+f1 = lambda x: 200 - 10*x**2
+f2 = lambda x: 5*x**3 + 15
+
+
+x = np.linspace(0, 5, 500)
+# Crear gráfica
+plt.figure(figsize=(8,6)) # Tamaño en pulgadas
+plt.plot(x,f1(x), color ="blue", label = "demanda")
+plt.plot(x, f2(x), color = "red", label = "oferta")
+#plt.plot (x, g(x), color = "green", label= "g(x)")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.legend(fontsize= 14)
+
+# Personalizar gráfica
+plt.title("Gráfica Ejercicio 8", fontsize= 12)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+
+plt.show()
+```
+
+Aproximamos la intersección
+
+```{python}
+def sistema(variables): 
+  x, y = variables
+  return [y-200+10*x**2, y-5*x**3-15]
+
+
+solucion = optimize.fsolve(sistema, x0=[2, 200])
+print(f" el punto de intersección es: ({round(solucion[0], 4)}, {round(solucion[1], 4)})")
+```
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+
+plt.plot(x,f1(x), color ="blue", label = "demanda")
+plt.plot(x, f2(x), color = "red", label = "oferta")
+#plt.plot (x, g(x), color = "green", label= "g(x)")
+plt.plot(solucion[0], solucion[1], marker = 'o', ms=8, color= "purple")
+plt.axhline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje x
+plt.axvline(0, color = "black", linewidth = 0.8, linestyle = "--") #Eje y
+
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+plt.legend()
+
+plt.show()
+```
+
+
+:::
