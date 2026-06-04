@@ -1,0 +1,1750 @@
+---
+title: "Tarea 5. Diferenciación e integración numérica."
+author: "Daniela Paola Méndez García"
+format: 
+  html:
+    grid: 
+      body-width: 1000px
+editor: visual
+jupyter: python3
+---
+
+Importamos packages y funciones necesarias:
+
+```{python}
+#| code-fold: true
+
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+from scipy.stats import norm
+from scipy import integrate
+import plotly.graph_objects as go
+from scipy.differentiate import derivative
+import numdifftools as nd
+from scipy import integrate
+import pandas as pd
+from scipy.stats import norm, expon, gamma, beta, uniform
+```
+
+# Ejercicio 1.
+
+Para cada una de las siguientes funciones:
+
+-   Realiza la respectiva gráfica en el intervalo dado.
+
+-   Compara las gráficas de las derivadas aproximadas de la función `derivative` de `Scipy`, con dos tamaños de paso utilizando la función `nd.Derivative` (con `order =2` y `order = 4`, con las opciones de `method`: `forward`, `backward`, `central`) y la derivada *exacta* en tal intervalo.
+
+-   Compara las gráficas de las segundas derivadas aproximadas con dos tamaños de paso utilizando la función `nd.Derivative` y la segunda derivada *exacta* en tal intervalo.
+
+-   Realiza las gráficas de los errores absolutos en cada caso.
+
+
+```{python}
+def forward_diff_3pts(f, x, h):
+    return (-3*f(x) + 4*f(x+h) - f(x+2*h)) / (2*h)
+```
+
+```{python}
+def backward_diff_3pts(f, x, h):
+    return (3*f(x) - 4*f(x-h) + f(x-2*h)) / (2*h)
+```
+
+```{python}
+def midpoint_diff_3pts(f, x, h):
+    return (f(x+h) - f(x-h)) / (2*h)
+```
+
+```{python}
+def centered_diff_5pts(f, x, h):
+    return (f(x-2*h) - 8*f(x-h) + 8*f(x+h) - f(x+2*h)) / (12*h)
+```
+
+```{python}
+def endpoint_diff_5pts(f, x, h):
+    return (-25*f(x) + 48*f(x+h) - 36*f(x+2*h) + 16*f(x+3*h) - 3*f(x+4*h)) / (12*h)
+```
+
+
+
+a)  $f(x)=e^{2x}-cos 2x$, $x\in [0,2]$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+f = lambda x: np.exp(2*x)- np.cos(2*x)
+
+x_values = np.linspace(0, 2, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label = "$f(x)$", linewidth = 2)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Función f(x) = e^(2x)-cos(2x)")
+plt.legend()
+plt.grid(alpha = 0.3)
+plt.show()
+
+
+```
+
+La derivada exacta es $f'(x)= 2e^2x+2sin2x$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+df_exacta = lambda x: 2*np.exp(2*x) + 2*np.sin(2*x)
+
+x_values = np.linspace(0, 2, 200)
+h = 0.01
+
+forward_diff_3pts_nd = nd.Derivative(f, step=h, method='forward', order=2, n=1)
+backward_diff_3pts_nd = nd.Derivative(f, step=h, method='backward', order=2, n=1)
+midpoint_diff_3pts_nd = nd.Derivative(f, step=h, method='central', order=2, n=1)
+centered_diff_5pts_nd = nd.Derivative(f, step=h, method='central', order=4, n=1)
+endpoint_diff_5pts_forward_nd = nd.Derivative(f, step=h, method='forward', order=4, n=1)
+endpoint_diff_5pts_backward_nd = nd.Derivative(f, step=h, method='backward', order=4, n=1)
+
+
+
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=df_exacta(x_values), mode='lines', name='f\'(x)'))
+fig.add_trace(go.Scatter(x=x_values, y=forward_diff_3pts_nd(x_values), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=backward_diff_3pts_nd(x_values), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=midpoint_diff_3pts_nd(x_values), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=centered_diff_5pts_nd(x_values), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_forward_nd(x_values), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_backward_nd(x_values), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Aproximación de la derivada', 
+    xaxis_title='x', 
+    yaxis_title='f\'(x)',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(forward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(backward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(midpoint_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(centered_diff_5pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_forward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_backward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Error absoluto', 
+    xaxis_title='x', 
+    yaxis_title='Error absoluto',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+b)  $f(x)=log(x+2)-(x+1)^2$, $x\in [0,5]$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+f = lambda x: np.log(x + 2) - (x + 1)**2
+
+x_values = np.linspace(0, 5, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label = "$f(x)$", linewidth = 2)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Función f(x) = log(x+2)-(x+1)^2")
+plt.legend()
+plt.grid(alpha = 0.3)
+plt.show()
+
+
+```
+
+La derivada exacta es $f'(x)= (x/(x+2))​−2(x+1)$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+df_exacta = lambda x: 1/(x + 2) - 2*(x + 1)
+
+x_values = np.linspace(0, 5, 200)
+h = 0.01
+
+forward_diff_3pts_nd = nd.Derivative(f, step=h, method='forward', order=2, n=1)
+backward_diff_3pts_nd = nd.Derivative(f, step=h, method='backward', order=2, n=1)
+midpoint_diff_3pts_nd = nd.Derivative(f, step=h, method='central', order=2, n=1)
+centered_diff_5pts_nd = nd.Derivative(f, step=h, method='central', order=4, n=1)
+endpoint_diff_5pts_forward_nd = nd.Derivative(f, step=h, method='forward', order=4, n=1)
+endpoint_diff_5pts_backward_nd = nd.Derivative(f, step=h, method='backward', order=4, n=1)
+
+
+
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=df_exacta(x_values), mode='lines', name='f\'(x)'))
+fig.add_trace(go.Scatter(x=x_values, y=forward_diff_3pts_nd(x_values), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=backward_diff_3pts_nd(x_values), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=midpoint_diff_3pts_nd(x_values), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=centered_diff_5pts_nd(x_values), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_forward_nd(x_values), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_backward_nd(x_values), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Aproximación de la derivada', 
+    xaxis_title='x', 
+    yaxis_title='f\'(x)',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(forward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(backward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(midpoint_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(centered_diff_5pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_forward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_backward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Error absoluto', 
+    xaxis_title='x', 
+    yaxis_title='Error absoluto',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+c)  $f(x)=\sqrt{x} sen(x^2)$, $x\in [0,\pi]$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+f = lambda x: np.sqrt(x) * np.sin(x**2)
+
+x_values = np.linspace(0, np.pi, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label = "$f(x)$", linewidth = 2)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Función f(x) = np.sqrt(x)sin(x^2)")
+plt.legend()
+plt.grid(alpha = 0.3)
+plt.show()
+
+
+```
+
+La derivada exacta es $f'(x)= np.sqrt(x)sin(x^2)$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+df_exacta = lambda x: np.sin(x**2)/(2*np.sqrt(x)) + 2*x**(3/2)*np.cos(x**2)
+
+x_values = np.linspace(0, np.pi, 200)
+h = 0.01
+
+forward_diff_3pts_nd = nd.Derivative(f, step=h, method='forward', order=2, n=1)
+backward_diff_3pts_nd = nd.Derivative(f, step=h, method='backward', order=2, n=1)
+midpoint_diff_3pts_nd = nd.Derivative(f, step=h, method='central', order=2, n=1)
+centered_diff_5pts_nd = nd.Derivative(f, step=h, method='central', order=4, n=1)
+endpoint_diff_5pts_forward_nd = nd.Derivative(f, step=h, method='forward', order=4, n=1)
+endpoint_diff_5pts_backward_nd = nd.Derivative(f, step=h, method='backward', order=4, n=1)
+
+
+
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=df_exacta(x_values), mode='lines', name='f\'(x)'))
+fig.add_trace(go.Scatter(x=x_values, y=forward_diff_3pts_nd(x_values), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=backward_diff_3pts_nd(x_values), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=midpoint_diff_3pts_nd(x_values), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=centered_diff_5pts_nd(x_values), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_forward_nd(x_values), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_backward_nd(x_values), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Aproximación de la derivada', 
+    xaxis_title='x', 
+    yaxis_title='f\'(x)',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(forward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(backward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(midpoint_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(centered_diff_5pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_forward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_backward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Error absoluto', 
+    xaxis_title='x', 
+    yaxis_title='Error absoluto',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+d)  $f(x)=(cos\,3x)^2-e^{2x}$, $x\in [0,\pi/2]$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+f = lambda x: np.cos(3*x)**2 - np.exp(2*x)
+
+x_values = np.linspace(0, (np.pi)/2, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label = "$f(x)$", linewidth = 2)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Función f(x) = cos^2(3x)−e^2x")
+plt.legend()
+plt.grid(alpha = 0.3)
+plt.show()
+
+
+```
+
+La derivada exacta es $f'(x)= −3sin(6x)−2e^2x$
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+df_exacta = lambda x: -3*np.sin(6*x) - 2*np.exp(2*x)
+
+x_values = np.linspace(0, (np.pi)/2, 200)
+h = 0.01
+
+forward_diff_3pts_nd = nd.Derivative(f, step=h, method='forward', order=2, n=1)
+backward_diff_3pts_nd = nd.Derivative(f, step=h, method='backward', order=2, n=1)
+midpoint_diff_3pts_nd = nd.Derivative(f, step=h, method='central', order=2, n=1)
+centered_diff_5pts_nd = nd.Derivative(f, step=h, method='central', order=4, n=1)
+endpoint_diff_5pts_forward_nd = nd.Derivative(f, step=h, method='forward', order=4, n=1)
+endpoint_diff_5pts_backward_nd = nd.Derivative(f, step=h, method='backward', order=4, n=1)
+
+
+
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=df_exacta(x_values), mode='lines', name='f\'(x)'))
+fig.add_trace(go.Scatter(x=x_values, y=forward_diff_3pts_nd(x_values), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=backward_diff_3pts_nd(x_values), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=midpoint_diff_3pts_nd(x_values), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=centered_diff_5pts_nd(x_values), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_forward_nd(x_values), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=endpoint_diff_5pts_backward_nd(x_values), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Aproximación de la derivada', 
+    xaxis_title='x', 
+    yaxis_title='f\'(x)',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(forward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(backward_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(midpoint_diff_3pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Midpoint 3 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(centered_diff_5pts_nd(x_values) - df_exacta(x_values)), mode='lines', name='Centered 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_forward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Forward 5 Pts'))
+fig.add_trace(go.Scatter(x=x_values, y=np.abs(endpoint_diff_5pts_backward_nd(x_values) - df_exacta(x_values)), mode='lines', name='Backward 5 Pts'))
+fig.update_layout(
+    title='Error absoluto', 
+    xaxis_title='x', 
+    yaxis_title='Error absoluto',
+    template='plotly_white',
+    width=800,
+    height=500)
+fig.show()      
+```
+
+
+# Ejercicio 2
+
+Elige 3 indicadores económicos del INEGI (del archivo `TIE_Inegi_long.xlsx`), realiza la gráfica de la serie temporal y de su derivada. Brinda un análisis de la gráfica y de la evolución del indicador a lo largo del tiempo.
+
+```{python}
+#| code-fold: true
+
+df = pd.read_excel('TIE_Inegi_long.xlsx')
+```
+
+1:
+
+```{python}
+#| code-fold: true
+df1 = df[['Fecha', 'Actividad_economica']].dropna()
+x1 = np.array((df1['Fecha'] - df1['Fecha'].iloc[0]).dt.days.values, dtype=float)
+y1 = df1['Actividad_economica'].values
+
+plt.figure(figsize=(10, 4))
+plt.plot(df1['Fecha'], y1, label='Actividad económica', color='steelblue')
+plt.xlabel('Fecha')
+plt.ylabel('Índice')
+plt.title('Serie temporal — Actividad económica')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+```
+
+```{python}
+#| code-fold: true
+dy1 = np.gradient(y1, x1)
+
+plt.figure(figsize=(10, 4))
+plt.plot(df1['Fecha'], dy1, label="Derivada — Actividad económica", color='tomato')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.xlabel('Fecha')
+plt.ylabel("Tasa de cambio")
+plt.title("Derivada numérica — Actividad económica")
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+print("=== Actividad económica ===")
+print(f"Valor mínimo: {y1.min():.2f} en {df1['Fecha'].iloc[y1.argmin()].date()}")
+print(f"Valor máximo: {y1.max():.2f} en {df1['Fecha'].iloc[y1.argmax()].date()}")
+print(f"Mayor caída mensual: {dy1.min():.4f}")
+print(f"Mayor alza mensual:  {dy1.max():.4f}")
+```
+
+2-
+
+```{python}
+#| code-fold: true
+df2 = df[['Fecha', 'Precios_consumidor']].dropna()
+x2 = np.array((df2['Fecha'] - df2['Fecha'].iloc[0]).dt.days.values, dtype=float)
+y2 = df2['Precios_consumidor'].values
+
+plt.figure(figsize=(10, 4))
+plt.plot(df2['Fecha'], y2, label='Precios al consumidor', color='darkorange')
+plt.xlabel('Fecha')
+plt.ylabel('Índice')
+plt.title('Serie temporal — Precios al consumidor')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+dy2 = np.gradient(y2, x2)
+
+plt.figure(figsize=(10, 4))
+plt.plot(df2['Fecha'], dy2, label="Derivada — Precios al consumidor", color='purple')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.xlabel('Fecha')
+plt.ylabel("Tasa de cambio")
+plt.title("Derivada numérica — Precios al consumidor")
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+print("\n=== Precios al consumidor ===")
+print(f"Valor mínimo: {y2.min():.2f} en {df2['Fecha'].iloc[y2.argmin()].date()}")
+print(f"Valor máximo: {y2.max():.2f} en {df2['Fecha'].iloc[y2.argmax()].date()}")
+print(f"Mayor aceleración inflacionaria: {dy2.max():.6f}")
+
+```
+
+3-
+
+```{python}
+#| code-fold: true
+df3 = df[['Fecha', 'Tipo_cambio_nominal']].dropna()
+x3 = np.array((df3['Fecha'] - df3['Fecha'].iloc[0]).dt.days.values, dtype=float)
+y3 = df3['Tipo_cambio_nominal'].values
+
+plt.figure(figsize=(10, 4))
+plt.plot(df3['Fecha'], y3, label='Tipo de cambio nominal (MXN/USD)', color='seagreen')
+plt.xlabel('Fecha')
+plt.ylabel('Pesos por dólar')
+plt.title('Serie temporal — Tipo de cambio nominal')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+dy3 = np.gradient(y3, x3)
+
+plt.figure(figsize=(10, 4))
+plt.plot(df3['Fecha'], dy3, label="Derivada — Tipo de cambio nominal", color='firebrick')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.xlabel('Fecha')
+plt.ylabel("Tasa de cambio")
+plt.title("Derivada numérica — Tipo de cambio nominal")
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+print("\n=== Tipo de cambio nominal ===")
+print(f"Valor mínimo: {y3.min():.2f} en {df3['Fecha'].iloc[y3.argmin()].date()}")
+print(f"Valor máximo: {y3.max():.2f} en {df3['Fecha'].iloc[y3.argmax()].date()}")
+print(f"Mayor depreciación diaria: {dy3.max():.6f}")
+print(f"Mayor apreciación diaria:  {dy3.min():.6f}")
+```
+
+
+
+# Ejercicio 3
+
+Calcular el valor exacto y las aproximaciones numéricas de la siguiente integral:
+
+\begin{equation}
+\int_0^4 x^2e^{-x} dx    
+\end{equation}
+
+Como en el primer ejemplo del archivo `Ejemplos_10_Int_num.qmd`.
+
+```{python}
+#| code-fold: true
+#| fig-align: center
+
+a=0
+b=4
+
+f = lambda x: (x**2)*np.exp(-x)
+x_values = np.linspace(-0.3, 4.3, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x) = x e^x$')
+plt.fill_between(np.linspace(a, b, 100), f(np.linspace(a, b, 100)), alpha=0.3, color='orange', label='Área bajo la curva')
+plt.title('Gráfica de la función $f(x) = x^2 e^(-x)$')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.axvline(0, color='black', lw=1, ls='--')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+integral_exacta = 2 - 26*np.exp(-4)
+print(f"El valor exacto de la integral es: {integral_exacta:.4f}")  
+``` 
+
+```{python}
+#|code-fold: true
+
+def trapezoidal(f, a, b):
+    return (b - a) * (f(a) + f(b)) / 2
+
+def simpson(f, a, b):
+    x_0 =a
+    x_2 = b
+    h = (b - a) / 2
+    x_1 = x_0 + h
+    int_approx = (h / 3) * (f(x_0) + 4 * f(x_1) + f(x_2))
+    return int_approx
+
+def simpson_38(f, a, b):
+    x_0 = a
+    x_3 = b
+    h = (b - a) / 3
+    x_1 = x_0 + h
+    x_2 = x_0 + 2 * h
+    int_approx = (3 * h / 8) * (f(x_0) + 3 * f(x_1) + 3 * f(x_2) + f(x_3))
+    return int_approx
+
+def boole(f, a, b):
+    x_0 = a
+    x_4 = b
+    h = (b - a) / 4
+    x_1 = x_0 + h
+    x_2 = x_0 + 2 * h
+    x_3 = x_0 + 3 * h
+    int_approx = (2 * h / 45) * (7 * f(x_0) + 32 * f(x_1) + 12 * f(x_2) + 32 * f(x_3) + 7 * f(x_4))
+    return int_approx
+```
+
+```{python}
+print("Aproximación con el método trapezoidal:")
+print(trapezoidal(f, a, b))
+print("Error absoluto:", abs(integral_exacta - trapezoidal(f, a, b)))   
+```
+
+```{python}
+print("Aproximación con la función `integrate.trapezoid` de `scipy`:")
+x_values = np.linspace(a, b, 2)
+y_values = f(x_values)
+print(integrate.trapezoid(y_values, x_values))
+print("Error absoluto:", abs(integral_exacta - integrate.trapezoid(y_values, x_values)))
+```
+
+```{python}
+print("Aproximación con el método de Simpson:")
+print(simpson(f, a, b))
+print("Error absoluto:", abs(integral_exacta - simpson(f, a, b)))
+```
+
+```{python}
+print("Aproximación con la función `integrate.simpson` de `scipy`:")
+x_values = np.linspace(a, b, 3)
+y_values = f(x_values)
+print(integrate.simpson(y_values, x_values))
+print("Error absoluto:", abs(integral_exacta - integrate.simpson(y_values, x_values)))
+```
+
+```{python}
+print("Aproximación con el método de Simpson 3/8:")
+print(simpson_38(f, a, b))
+print("Error absoluto:", abs(integral_exacta - simpson_38(f, a, b)))
+```
+
+```{python}
+print("Aproximación con el método de Boole:")
+print(boole(f, a, b))
+print("Error absoluto:", abs(integral_exacta - boole(f, a, b)))
+```
+
+
+```{python}
+n = 12
+h = (b - a) / n
+a_values = np.linspace(a, b, endpoint=False, num=n)  
+b_values = a_values + h
+trapezoidal_compuesto = sum(trapezoidal(f, a_i, b_i) for a_i, b_i in zip(a_values, b_values))
+print("Aproximación con la regla trapezoidal compuesta:")
+print(trapezoidal_compuesto)
+print("Error absoluto:", abs(integral_exacta - trapezoidal_compuesto))
+```
+
+```{python}
+print("Aproximación con la función `integrate.trapezoid` de `scipy` para la regla trapezoidal compuesta:")
+x_values = np.linspace(a, b, n+1)
+y_values = f(x_values)
+print(integrate.trapezoid(y_values, x_values))
+print("Error absoluto:", abs(integral_exacta - integrate.trapezoid(y_values, x_values)))
+```
+
+```{python}
+n = 12
+h = (b - a) / n
+a_values = np.linspace(a, b, endpoint=False, num=int(n/2))  
+b_values = a_values + 2*h
+simpson_compuesto = sum(simpson(f, a_i, b_i) for a_i, b_i in zip(a_values, b_values))
+print("Aproximación con el método de Simpson compuesto:")
+print(simpson_compuesto)
+print("Error absoluto:", abs(integral_exacta - simpson_compuesto))
+```
+
+```{python}
+print("Aproximación con la función `integrate.simpson` de `scipy` para el método de Simpson compuesto:")
+x_values = np.linspace(a, b, n+1)
+y_values = f(x_values)
+print(integrate.simpson(y_values, x_values))
+print("Error absoluto:", abs(integral_exacta - integrate.simpson(y_values, x_values)))
+```
+
+```{python}
+n = 12
+h = (b - a) / n
+a_values = np.linspace(a, b, endpoint=False, num=int(n/3))  
+b_values = a_values + 3*h
+simpson_38_compuesto = sum(simpson_38(f, a_i, b_i) for a_i, b_i in zip(a_values, b_values))
+print("Aproximación con el método de Simpson 3/8 compuesto:")
+print(simpson_38_compuesto)
+print("Error absoluto:", abs(integral_exacta - simpson_38_compuesto))
+```
+
+```{python}
+n = 12              
+h = (b - a) / n
+a_values = np.linspace(a, b, endpoint=False, num=int(n/4))
+b_values = a_values + 4*h
+boole_compuesto = sum(boole(f, a_i, b_i) for a_i, b_i in zip(a_values, b_values))
+print("Aproximación con el método de Boole compuesto:")
+print(boole_compuesto)
+print("Error absoluto:", abs(integral_exacta - boole_compuesto))
+```
+
+```{python}
+print("Aproximación con la función `integrate.quad` de `scipy`:")
+integral_quad, error_quad = integrate.quad(f, a, b)
+print(integral_quad)
+print("Error absoluto:", abs(integral_exacta - integral_quad))
+print("Estimación del error absoluto proporcionada por `integrate.quad`:", error_quad)
+```
+
+
+# Ejericicio 4
+
+Aproximar las siguientes integrales con la función `integrate.quad` (de SciPy) y con el método de Montecarlo, en cada caso hacer una gráfica de la función e indicar el área bajo la curva.
+
+a)  
+
+\begin{equation}
+\int_0^1 e^{-x^2}\,dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: np.exp(-x**2)
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+b)  
+
+\begin{equation}
+\int_0^\pi sen(x^2)\,dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=-0.1
+b=3.5
+f = lambda x: np.sin(x**2)
+x_values = np.linspace(-0.1, 3.5, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = -1
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = np.abs(y_random) <= np.abs(f(x_random))
+puntos_in = puntos_in * np.sign(y_random) == np.sign(f(x_random))
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+c)  
+
+\begin{equation}
+\int_\pi^{3\pi} \frac{sen(x)}{x}\,dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: (np.sin(x))/x
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+d)  
+
+\begin{equation}
+\int_0^\infty e^{-x^2} cos(x) \,dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: np.exp(-x**2)*np.cos(x)
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+e)  
+
+\begin{equation}
+\int_0^1 x^x \,dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: x**x
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+f)  
+
+\begin{equation}
+\int_1^5 e^{-x^2} x^3 dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: np.exp(-x**2)*x**3
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+
+g)  
+
+\begin{equation}
+\int_0^\infty \frac{x}{e^x-1} dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: x/(np.exp(x)-1)
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+
+
+h)  
+
+\begin{equation}
+\int_0^1 \frac{1}{\sqrt{x^4+1}} dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+a=0
+b=1
+f = lambda x: 1/(np.sqrt(x**4 + 1))
+x_values = np.linspace(-0.1, 1.1, 100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label=r'$f(x)$')
+plt.fill_between(np.linspace(a,b,100), f(np.linspace(a,b,100)), alpha=0.3, color = '#333AAA')
+plt.xlabel(r'$x$')
+plt.ylabel(r'$f(x)$')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+Aproximación de la integral.
+
+```{python}
+
+aprox_integral, error_integral = integrate.quad(f, a, b)
+print(f"La aproximación de la integral es: {aprox_integral}")
+print(f"El error estimado es: {error_integral}")
+
+```
+
+**Método de Montecarlo para aproximar la integral**
+
+```{python}
+#| code-fold: true 
+#| fig-align: "center" 
+
+N = 100000
+
+ymin = 0
+ymax = 1
+
+x_random = np.random.uniform(a, b, N)
+y_random = np.random.uniform(ymin, ymax, N)
+
+puntos_in = y_random <= f(x_random)
+
+
+plt.figure(figsize=(8, 5))
+plt.scatter(x_random[puntos_in], y_random[puntos_in], color='green', s=10, label='In')
+plt.scatter(x_random[~puntos_in], y_random[~puntos_in], color='red', s=10, label='Out')
+plt.plot(x_values, f(x_values), color='blue', label=r'$f(x)$')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Montecarlo para aproximar la integral')
+plt.legend()
+plt.grid()
+plt.axis('equal')
+plt.show()
+```
+
+
+```{python}
+#| code-fold: true
+integral_montecarlo = (ymax - ymin) * (b - a) * np.sum(puntos_in) / N
+print(f"Aproximación de la integral con el método de Montecarlo:")
+print(integral_montecarlo)
+
+```
+
+:::
+
+# Ejercicio 5
+
+Aproximar las siguientes integrales dobles y triples, llevar a cabo la gráfica cuando se indique y comparar con el valor *exacto* de la integral.
+
+a)  Realizar gráfica
+
+\begin{equation}
+\int_{-1}^{1}\int_1^2 (3y^2-x^2+5) dx dy
+\end{equation}
+
+```{python}
+#| code-fold: true
+
+x = np.linspace(1, 2, 50)  
+y = np.linspace(-1, 1, 50)  
+X, Y = np.meshgrid(x, y)
+Z = 3*y - x**2 +5
+
+surface = go.Surface(x=X, y=Y, z=Z, colorscale='viridis', opacity=0.9)
+
+# Paredes laterales
+Y_wall = np.linspace(-1, 1, 50)
+
+X_wall1, Y_wall1 = np.meshgrid(np.ones_like(Y_wall), Y_wall)
+Z_wall1 = np.vstack([np.zeros_like(Y_wall), 3*Y_wall**2 - 1 + 5])
+
+X_wall2, Y_wall2 = np.meshgrid(2*np.ones_like(Y_wall), Y_wall)
+Z_wall2 = np.vstack([np.zeros_like(Y_wall), 3*Y_wall**2 - 4 + 5])
+
+X_wall3, Y_wall3 = np.meshgrid(x, np.zeros_like(x))
+Z_wall3 = np.vstack([np.zeros_like(x), 3*0 - x**2 + 5])
+
+X_wall4, Y_wall4 = np.meshgrid(x, np.ones_like(x))
+Z_wall4 = np.vstack([np.zeros_like(x), 3*1 - x**2 + 5])
+
+walls = [
+    go.Surface(x=X_wall1, y=Y_wall1, z=Z_wall1, colorscale='Blues', showscale=False, opacity=0.5),
+    go.Surface(x=X_wall2, y=Y_wall2, z=Z_wall2, colorscale='Blues', showscale=False, opacity=0.5),
+    go.Surface(x=X_wall3, y=Y_wall3, z=Z_wall3, colorscale='Blues', showscale=False, opacity=0.5),
+    go.Surface(x=X_wall4, y=Y_wall4, z=Z_wall4, colorscale='Blues', showscale=False, opacity=0.5),
+]
+
+base = go.Surface(x=X, y=Y, z=np.zeros_like(Z), colorscale='Blues', showscale=False, opacity=0.3)
+
+fig = go.Figure(data=[surface, base] + walls)
+fig.update_layout(
+    title="Superficie f(x,y) = 3y² - x² + 5",
+    scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z")
+)
+fig.show()
+```
+
+```{python}
+#| code-fold: true
+# Nótese que el primer argumento es y
+f = lambda y, x: 3*y - x**2 +5
+integral_exacta_a = 32/3 + 2  
+integral_doble, error_doble = integrate.dblquad(f, 1, 2, -1, 1)
+print("Error absoluto:", abs(integral_exacta_a - integral_doble))
+print(f"Aproximación con la función `integrate.dblquad` de `scipy`:")
+print(integral_doble)
+print("Estimación del error absoluto proporcionada por `integrate.dblquad`:", error_doble)
+```
+
+b)  
+
+\begin{equation}
+\int_{0}^{6}\int_1^5 \sqrt{x+4y} dx dy
+\end{equation}
+
+
+```{python}
+#| code-fold: true
+f = lambda y, x: np.sqrt(x + 4*y)
+integral_doble, error_doble = integrate.dblquad(f, 1, 5, 0, 6)
+print(f"Aproximación con la función `integrate.dblquad` de `scipy`:")
+print(integral_doble)
+print("Estimación del error absoluto proporcionada por `integrate.dblquad`:", error_doble)
+```
+
+c)  
+
+\begin{equation}
+\int_{1}^{e}\int_0^{log(x)} x^3 dx dy
+\end{equation}
+
+```{python}
+#| code-fold: true
+f = lambda y, x: x**3
+integral_doble, error_doble = integrate.dblquad(f, 1, np.e, 0, lambda x: np.log(x))
+print(f"Aproximación con la función `integrate.dblquad` de `scipy`:")
+print(integral_doble)
+print("Estimación del error absoluto proporcionada por `integrate.dblquad`:", error_doble)
+```
+
+d)  
+
+\begin{equation}
+\int\int_D 30ye^x dx dy
+\end{equation}
+
+Donde $D\subset \mathbb{R}^2$ es la región en la siguiente gráfica.
+
+```{python}
+#| code-fold: true
+#| fig-align: 'center'
+
+
+
+
+x_val = np.array([0,4])
+y_val1 = np.array([0, 1])
+y_val2 = np.array([0, 4])
+
+plt.figure(figsize=(8,6))
+plt.plot(x_val, y_val1)
+plt.plot(x_val, y_val2)
+plt.fill_between(x_val, y1=y_val1, y2=y_val2, color="firebrick", alpha=0.5)
+plt.grid()
+plt.show()
+
+  
+```
+
+```{python}
+#| code-fold: true
+f = lambda y, x: 30*y*np.exp(x)
+integral_doble, error_doble = integrate.dblquad(f, 0, 4, lambda x: x/4, lambda x: x)
+print(f"Aproximación con la función `integrate.dblquad` de `scipy`:")
+print(integral_doble)
+print("Estimación del error absoluto proporcionada por `integrate.dblquad`:", error_doble)
+```
+
+
+e)  
+
+\begin{equation}
+\int\int \int_B z e^{x+y} dx\, dy\, dz, \, B=[0,1] \times [0,1] \times [0,1]
+\end{equation}
+
+```{python}
+#| code-fold: true
+f = lambda z, y, x: z * np.exp(x + y)
+integral_triple, error_triple = integrate.tplquad(f, 0, 1, 0, 1, 0, 1)
+print(f"Aproximación con la función `integrate.tplquad` de `scipy`:")
+print(integral_triple)
+print("Estimación del error absoluto proporcionada por `integrate.tplquad`:", error_triple)
+```
+
+f)  
+
+\begin{equation}
+\int_0^1 \int_0^x \int_0^y (y+xz) dz\, dy\, dx
+\end{equation}
+
+```{python}
+#| code-fold: true
+f = lambda z, y, x: y + x*z
+integral_triple, error_triple = integrate.tplquad(f,
+0, 1, lambda x: 0, lambda x: x,     lambda x, y: 0, lambda x, y: y)
+print(f"Aproximación con la función `integrate.tplquad` de `scipy`:")
+print(integral_triple)
+print("Estimación del error absoluto proporcionada por `integrate.tplquad`:", error_triple)
+```
+
+# Ejercicio 6
+
+De `scipy.stats` elige 5 distribuciones continuas diferentes de probabilidad continua, realiza la gráfica y encuentra la probabilidad que la variable aleatoria tome un valor en un intervalo dado. Compara el resultado con el método `cdf`.
+
+1- 
+
+```{python}
+#| code-fold: true
+a = 0
+b = 3
+f = lambda x: norm.pdf(x)
+x_values = np.linspace(-0.5, 6, 200)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label='f(x) - Exponencial Exp(1)')
+plt.fill_between(np.linspace(a, b, 100), f(np.linspace(a, b, 100)), alpha=0.3, color='#AA3311', label='Área bajo la curva')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.axvline(0, color='black', lw=1, ls='--')
+plt.title('Distribución Exponencial Exp(λ=1)')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+integral_cdf = norm.cdf(b) - norm.cdf(a)
+print(f"[Normal] Valor con cdf: {integral_cdf:.8f}")
+```
+
+```{python}
+#| code-fold: true
+print("Aproximación con integrate.simpson:")
+print(integrate.simpson(f(np.linspace(a, b, 100)), np.linspace(a, b, 100)))
+```
+
+```{python}
+#| code-fold: true
+integral_quad, error_quad = integrate.quad(f, a, b)
+print("Aproximación con integrate.quad:", integral_quad)
+print("Error absoluto:", abs(integral_cdf - integral_quad))
+print("Error estimado por integrate.quad:", error_quad)
+```
+
+2-
+
+```{python}
+#| code-fold: true
+a = 0
+b = 3
+f = lambda x: expon.pdf(x)
+x_values = np.linspace(-0.5, 6, 200)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label='f(x) - Exponencial Exp(1)')
+plt.fill_between(np.linspace(a, b, 100), f(np.linspace(a, b, 100)), alpha=0.3, color='#AA3311', label='Área bajo la curva')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.axvline(0, color='black', lw=1, ls='--')
+plt.title('Distribución Exponencial Exp(λ=1)')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+integral_cdf = expon.cdf(b) - expon.cdf(a)
+print(f"\n[Exponencial] Valor con cdf: {integral_cdf:.8f}")
+```
+
+```{python}
+#| code-fold: true
+print("Aproximación con integrate.simpson:")
+print(integrate.simpson(f(np.linspace(a, b, 100)), np.linspace(a, b, 100)))
+```
+
+```{python}
+#| code-fold: true
+integral_quad, error_quad = integrate.quad(f, a, b)
+print("Aproximación con integrate.quad:", integral_quad)
+print("Error absoluto:", abs(integral_cdf - integral_quad))
+print("Error estimado por integrate.quad:", error_quad)
+```
+
+3- 
+
+```{python}
+#| code-fold: true
+a_int = 0
+b_int = 4
+dist = gamma(a=2, scale=1)
+f = lambda x: dist.pdf(x)
+x_values = np.linspace(-0.5, 8, 200)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label='f(x) - Gamma(α=2, β=1)')
+plt.fill_between(np.linspace(a_int, b_int, 100), f(np.linspace(a_int, b_int, 100)), alpha=0.3, color='#11AA55', label='Área bajo la curva')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.axvline(0, color='black', lw=1, ls='--')
+plt.title('Distribución Gamma(α=2, β=1)')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+integral_cdf = dist.cdf(b_int) - dist.cdf(a_int)
+print(f"\n[Gamma] Valor con cdf: {integral_cdf:.8f}")
+```
+
+```{python}
+#| code-fold: true
+print("Aproximación con integrate.simpson:")
+print(integrate.simpson(f(np.linspace(a_int, b_int, 100)), np.linspace(a_int, b_int, 100)))
+```
+
+```{python}
+#| code-fold: true
+integral_quad, error_quad = integrate.quad(f, a_int, b_int)
+print("Aproximación con integrate.quad:", integral_quad)
+print("Error absoluto:", abs(integral_cdf - integral_quad))
+print("Error estimado por integrate.quad:", error_quad)
+```
+
+
+4- 
+
+```{python}
+#| code-fold: true
+a_int = 0.1
+b_int = 0.7
+dist = beta(a=2, b=5)
+f = lambda x: dist.pdf(x)
+x_values = np.linspace(0, 1, 200)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label='f(x) - Beta(α=2, β=5)')
+plt.fill_between(np.linspace(a_int, b_int, 100), f(np.linspace(a_int, b_int, 100)), alpha=0.3, color='#5511AA', label='Área bajo la curva')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.axvline(0, color='black', lw=1, ls='--')
+plt.title('Distribución Beta(α=2, β=5)')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+integral_cdf = dist.cdf(b_int) - dist.cdf(a_int)
+print(f"\n[Beta] Valor con cdf: {integral_cdf:.8f}")
+```
+
+```{python}
+#| code-fold: true
+print("Aproximación con integrate.simpson:")
+print(integrate.simpson(f(np.linspace(a_int, b_int, 100)), np.linspace(a_int, b_int, 100)))
+
+```
+
+
+```{python}
+#| code-fold: true
+integral_quad, error_quad = integrate.quad(f, a_int, b_int)
+print("Aproximación con integrate.quad:", integral_quad)
+print("Error absoluto:", abs(integral_cdf - integral_quad))
+print("Error estimado por integrate.quad:", error_quad)
+```
+
+
+5-
+
+```{python}
+#| code-fold: true
+a_int = 3
+b_int = 7
+dist = uniform(loc=2, scale=6)
+f = lambda x: dist.pdf(x)
+x_values = np.linspace(0, 10, 200)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x_values, f(x_values), label='f(x) - Uniforme U(2, 8)')
+plt.fill_between(np.linspace(a_int, b_int, 100), f(np.linspace(a_int, b_int, 100)), alpha=0.3, color='#1155AA', label='Área bajo la curva')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.axhline(0, color='black', lw=1, ls='--')
+plt.axvline(0, color='black', lw=1, ls='--')
+plt.title('Distribución Uniforme U(2, 8)')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+#| code-fold: true
+integral_cdf = dist.cdf(b_int) - dist.cdf(a_int)
+print(f"\n[Uniforme] Valor con cdf: {integral_cdf:.8f}")
+```
+
+```{python}
+#| code-fold: true
+print("Aproximación con integrate.simpson:")
+print(integrate.simpson(f(np.linspace(a_int, b_int, 100)), np.linspace(a_int, b_int, 100)))
+
+```
+
+```{python}
+#| code-fold: true
+integral_quad, error_quad = integrate.quad(f, a_int, b_int)
+print("Aproximación con integrate.quad:", integral_quad)
+print("Error absoluto:", abs(integral_cdf - integral_quad))
+print("Error estimado por integrate.quad:", error_quad)
+```
+
+
+
